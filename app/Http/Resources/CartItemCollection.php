@@ -4,7 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
-class CartItem extends ResourceCollection
+class CartItemCollection extends ResourceCollection
 {
     public $collects = 'App\Http\Resources\CartItemResource';
     /**

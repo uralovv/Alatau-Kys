@@ -9,7 +9,8 @@ class Cart extends Model
 {
     use HasFactory;
     protected $fillable = ['key','id'];
-    public $primaryKey = 'key';
+    protected $primaryKey = 'key';
+    public $incrementing = false;
 
 
     public function items(){

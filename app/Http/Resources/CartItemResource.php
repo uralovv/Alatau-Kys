@@ -18,11 +18,13 @@ class CartItemResource extends JsonResource
 //        return parent::toArray($request);
         $product = Product::find($this->product_id);
 
+
         return [
             'ProductID' => $this->product_id,
             'Price' => $product->price,
             'Product Name' => $product->name,
-            'Quantity' => $this->quantity
+            'Quantity' => $this->quantity,
+            'Subtotal' => $this->quantity * $product->price
         ];
     }
 

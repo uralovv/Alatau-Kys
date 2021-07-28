@@ -3,13 +3,33 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\CartItem;
+use App\Http\Resources\CartItemCollection;
+use App\Models\Product;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use App\Models\Cart;
 use Illuminate\Support\Facades\Validator;
+use App\Models\CartItem;
 
 class CartController extends Controller
 {
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function store(Request $request)
+    {
+        $cart = Cart::create([
+            'key' => md5(uniqid(rand(), true)),
+        ]);
+        return response()->json([
+            'Message' => 'A new cart have been created for you!',
+            'key' => $cart->key,
+        ], 201);
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -25,64 +45,87 @@ class CartController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function create()
+    public function addProducts($key, Request $request)
     {
-        //
-    }
+        $validator = Validator::make($request->all(), [
+            'productId' => 'bail|required|numeric',
+            'quantity' => 'bail|required|numeric|min:1|max:10'
+        ],
+            [
+                'productId.required' => 'Введите идентификатор продукта !',
+                'productId.numeric' => 'Неверный формат идентификатора продукта !',
+                'quantity.required' => 'Введите количество продукта !',
+                'quantity.numeric' => 'Неверный формат количества продукта !',
+                'quantity.min' => 'Минимальное колиество - 1 !',
+                'quantity.max' => 'Максимальное колиество - 10 !',
+            ]);
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function store(Request $request)
-    {
-        $cart = Cart::create([
-            'key' => md5(uniqid(rand(), true)),
+        if ($validator->fails()) {
+            throw new \Exception($validator->errors()->first());
+        }
 
+        $productId = $request->input('productId');
+        $quantity = $request->input('quantity');
 
-        ]);
-        return response()->json([
-            'Message' => 'A new cart have been created for you!',
-            'key' => $cart->key,
-        ], 201);
+        $cart = Cart::select(['id', 'key'])->find($key);
+
+        if ($cart) {
+            try {
+                $product = Product::findOrFail($productId);
+            } catch (ModelNotFoundException $e) {
+                throw new \Exception('Товар не найден !');
+            }
+            $cartItem = CartItem::where(['cart_key' => $cart->key, 'product_id' => $productId])->first();
+            if ($cartItem) {
+                $cartItem->quantity = $quantity;
+                CartItem::where(['cart_key' => $cart->key, 'product_id' => $productId])->update(['quantity' => $quantity]);
+            } else {
+                CartItem::create(['cart_key' => $cart->key, 'product_id' => $productId, 'quantity' => $quantity]);
+            }
+            return response([
+                'message' => 'Product added to your cart !'
+            ]);
+        } else {
+            throw new \Exception('Wrong cart key', 400);
+        }
 
     }
 
     /**
      * Display the specified resource.
      *
-     * @param  int  $id
+     * @param int $id
      * @return \Illuminate\Http\Response
      */
-    public function show(Cart $cart, Request $request)
+    public function show($key)
     {
-        //
-        $validator = Validator::make(
-            $request->all(),[
-              'cartKey' => 'bail|required'
-            ]
-        );
-        if ($validator->fails()){
-            throw new \Exception($validator->errors()->first(),400);
-        }
-        $cartKey = $request->input('cartKey');
-        if ($cart->key == $cartKey){
-            return response([
-                'Items in Cart' => new CartItem($cart->items),
-            ],200);
-        }
-        else{
+        $cart = Cart::select(['id', 'key'])->find($key);
+
+        if (!$cart) {
             throw new \Exception('Неверный uuid корзины !');
         }
+        $total = (float) 0.0;
+        $items = $cart->items;
 
+        foreach ($items as $item) {
+            $product =Product::find($item->product_id);
+            $price = $product->price;
+//            $total = $total + ($price * $item->quantity) . ' ' . 'Тенге';
+            $total = $total + ($price * $item->quantity);
+//            $total.= ' Тенге ';
+        }
+
+        return response([
+            'cart' => $cart->key,
+            'Items in cart' => new CartItemCollection($cart->items),
+            'Total' => $total
+        ]);
     }
 
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  int  $id
+     * @param int $id
      * @return \Illuminate\Http\Response
      */
     public function edit($id)
@@ -93,8 +136,8 @@ class CartController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
+     * @param \Illuminate\Http\Request $request
+     * @param int $id
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, $id)
@@ -105,123 +148,45 @@ class CartController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  int  $id
+     * @param int $key
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function removeProduct($key, Request $request)
     {
-        //
+        $validator = Validator::make(
+            $request->all(), [
+            'productId' => 'bail|required|numeric'
+        ],
+            [
+                'productId.required' => 'Введите идентификатор продукта !',
+                'productId.numeric' => 'Неверный формат идентификатора продукта !',
+            ]
+        );
+        if ($validator->fails()) {
+            throw new \Exception($validator->errors()->first());
+        }
+
+        $productId = $request->input('productId');
+        $cart = Cart::select(['id', 'key'])->find($key);
+        if ($cart) {
+            try {
+                $product = Product::findOrFail($productId);
+            } catch (ModelNotFoundException $e) {
+                throw new \Exception('Товар не найден !');
+            }
+            $cartItem = CartItem::where(['cart_key' => $cart->key, 'product_id' => $productId])->first();
+
+            if ($cartItem){
+                $cartItem->delete();
+                return response([
+                   'message' => 'Товар удален из корзины !'
+                ]);
+            }else{
+                throw new \Exception('Товар не найден в корзине  !');
+            }
+        }
+        else{
+            throw new \Exception('Неверный uuid корзины !');
+        }
     }
 }
-
-
-//namespace App\Http\Controllers\API;
-//
-//use App\Http\Controllers\Controller;
-//use App\Http\Resources\CartItem;
-//use App\Models\Cart;
-//use App\Models\Product;
-//use Illuminate\Database\Eloquent\ModelNotFoundException;
-//use Illuminate\Http\Request;
-//use Illuminate\Support\Facades\Validator;
-//
-//class CartController extends Controller
-//{
-//    //
-//    public function store(Request $request)
-//    {
-//        $cart = Cart::create([
-//            'id' => md5(uniqid(rand(), true)),
-//            'key' => md5(uniqid(rand(), true))
-//        ]);
-//
-//        return response()->json([
-//            'message' => 'Корзина создана !',
-//            'cartToken' => $cart->id,
-//            'cartKey' => $cart->key,
-//        ], 201);
-//    }
-//
-//    public function show(Cart $cart, Request $request)
-//    {
-//        $validator = Validator::make($request->all(), [
-//            'cartKey' => 'bail|required',
-//        ]);
-//
-//        if ($validator->fails()) {
-//            return response()->json([
-//                'errors' => $validator->errors(),
-//            ], 400);
-//        }
-//
-//        $cartKey = $request->input('cartKey');
-//        if ($cart->key == $cartKey) {
-//            return response()->json([
-//                'cart' => $cart->id,
-//                'Items in Cart' => new CartItem($cart->items),
-//            ], 200);
-//
-//        } else {
-//
-//            return response()->json([
-//                'message' => 'The CartKey you provided does not match the Cart Key for this Cart.',
-//            ], 400);
-//        }
-//
-//    }
-//
-//    public function addProducts(Cart $cart, Request $request)
-//    {
-//        $validator = Validator::make(
-//            $request->all(), [
-//            'cartKey' => 'bail|required',
-//            'productId' => 'bail|required',
-//            'quantity' => 'bail|required|numeric|min:1|max:10',
-//        ],
-//            [
-//                'cartKey.required' => 'Введите uuid корзины !',
-//                'productId.required' => 'Введите id продукта !',
-//                'productId' => 'Введите число для id продукта !',
-//                'quantity.required' => 'Введите количество продукта !',
-//                'quantity.min' => 'Минимальное количество для заказа - 1',
-//                'quantity.max' => 'Максимальное количество для заказа - 10',
-//            ]
-//        );
-//
-//        if ($validator->fails()) {
-//            throw new \Exception($validator->errors()->first());
-//        }
-//
-//        $cartKey = $request->input('cartKey');
-//        $productId = $request->input('productId');
-//        $quantity = $request->input('quantity');
-//
-//        if ($cart->key == $cartKey) {
-//            //Check if the proudct exist or return 404 not found.
-//            try {
-//                $Product = Product::findOrFail($productId);
-//            } catch (ModelNotFoundException $e) {
-//                return response()->json([
-//                    'message' => 'The Product you\'re trying to add does not exist.',
-//                ], 404);
-//            }
-//
-//            //check if the the same product is already in the Cart, if true update the quantity, if not create a new one.
-//            $cartItem = \App\Models\CartItem::where(['cart_id' => $cart->getKey(), 'product_id' => $productId])->first();
-//            if ($cartItem) {
-//                $cartItem->quantity = $quantity;
-//                \App\Models\CartItem::where(['cart_id' => $cart->getKey(), 'product_id' => $productId])->update(['quantity' => $quantity]);
-//            } else {
-//                \App\Models\CartItem::create(['cart_id' => $cart->getKey(), 'product_id' => $productId, 'quantity' => $quantity]);
-//            }
-//
-//            return response()->json(['message' => 'The Cart was updated with the given product information successfully'], 200);
-//
-//        } else {
-//
-//            return response()->json([
-//                'message' => 'The CarKey you provided does not match the Cart Key for this Cart.',
-//            ], 400);
-//        }
-//    }
-//}

@@ -43,7 +43,13 @@ Route::group(['prefix'=>'products'], function (){
     Route::get('{id}',[ProductController::class,'view']);
 });
 
-Route::apiResource('cart',CartController::class)->except(['update','index']);
+//Route::apiResource('cart',CartController::class)->except(['update','index']);
+Route::group(['prefix'=>'cart'], function (){
+    Route::post('create',[CartController::class,'store']);
+    Route::get('{key}', [CartController::class,'show']);
+    Route::post('{key}',[CartController::class,'addProducts']);
+    Route::delete('{key}',[CartController::class,'removeProduct']);
+});
 
 
 
