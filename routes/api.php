@@ -8,6 +8,7 @@ use App\Http\Controllers\API\SecureCodeController;
 use App\Http\Controllers\API\CategoriesController;
 use App\Http\Controllers\API\ProductController;
 use App\Http\Controllers\API\CartController;
+use App\Http\Controllers\API\WishlistController;
 
 /*
 |--------------------------------------------------------------------------
@@ -30,7 +31,7 @@ Route::group(['prefix'=>'secure-code'],function (){
 });
 
 Route::group(['prefix'=>'auth'], function() {
-    Route::post('login',[AuthController::class,'login']);
+    Route::post('login',[AuthController::class,'login'])->name('login');
 //    Route::post('register',[AuthController::class,'register']);
 });
 
@@ -49,6 +50,11 @@ Route::group(['prefix'=>'cart'], function (){
     Route::get('{key}', [CartController::class,'show']);
     Route::post('{key}',[CartController::class,'addProducts']);
     Route::delete('{key}',[CartController::class,'removeProduct']);
+});
+Route::group(['prefix' => 'wishlist'], function (){
+   Route::post('add',[WishlistController::class,'store'])->middleware('auth:api');
+   Route::delete('delete',[WishlistController::class,'delete'])->middleware('auth:api');
+   Route::get('view',[WishlistController::class,'view'])->middleware('auth:api');
 });
 
 
