@@ -9,7 +9,7 @@ class Product extends Model
 {
     use HasFactory;
 
-    public function wishlist(){
-        return $this->belongsTo(Wishlist::class);
-    }
+//    public function wishlist(){
+//        return $this->belongsTo(Wishlist::class,'product_id');
+//    }
 }

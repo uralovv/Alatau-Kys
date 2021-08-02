@@ -16,7 +16,7 @@ class ProductController extends Controller
         if (!$product) {
             throw new \Exception('Товар не найден !');
         }
-        return response()->json(['Result' => $product], 200);
+        return response()->json(['Data' => $product], 200);
     }
 
 
@@ -40,7 +40,7 @@ class ProductController extends Controller
         $products = Product::select(['id', 'name', 'description', 'price', 'image'])->find($productIds);
 
             return response()->json([
-                'result' => $products
+                'Результаты поиска: ' => $products
             ]);
         }
 

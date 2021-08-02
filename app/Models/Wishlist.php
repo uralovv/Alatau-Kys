@@ -13,7 +13,8 @@ class Wishlist extends Model
     public function user(){
         return $this->belongsTo(User::class);
     }
-    public function products(){
-        return $this->hasMany(Product::class);
+    public function products(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Product::class,'product_id');
     }
 }
