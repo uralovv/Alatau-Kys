@@ -9,6 +9,7 @@ use App\Http\Controllers\API\CategoriesController;
 use App\Http\Controllers\API\ProductController;
 use App\Http\Controllers\API\CartController;
 use App\Http\Controllers\API\WishlistController;
+use App\Http\Controllers\API\PasswordController;
 
 /*
 |--------------------------------------------------------------------------
@@ -55,6 +56,9 @@ Route::group(['prefix' => 'wishlist'], function (){
    Route::post('add',[WishlistController::class,'store'])->middleware('auth:api');
    Route::delete('delete',[WishlistController::class,'delete'])->middleware('auth:api');
    Route::get('view',[WishlistController::class,'view'])->middleware('auth:api');
+});
+Route::group(['prefix' => 'profile'], function () {
+    Route::patch('password-change',[PasswordController::class,'update'])->middleware('auth:api');
 });
 
 
