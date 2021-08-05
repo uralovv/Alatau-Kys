@@ -60,6 +60,12 @@ Route::group(['prefix' => 'wishlist'], function (){
 Route::group(['prefix' => 'profile'], function () {
     Route::patch('password-change',[PasswordController::class,'update'])->middleware('auth:api');
 });
+Route::group(['prefix' => 'remastered'], function (){
+    Route::post('registration',[AuthController::class, 'registration']);
+    Route::get('test',[AuthController::class,'confirm_code']);
+});
+Route::post('forgot-password',[PasswordController::class,'forgot']);
+Route::post('reset-password',[PasswordController::class,'reset']);
 
 
 
