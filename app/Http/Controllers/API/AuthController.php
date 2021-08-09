@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
+    private $name;
     // Register account
     /**
      * @throws Exception
@@ -85,11 +86,15 @@ class AuthController extends Controller
         ]);
 
         $validate['password'] = bcrypt($request->password);
+//        $this->confirm_code($request);
+//        $this->name = $request->input('name');
+         $this->confirm_code($request);
 
-
+        $user = User::create($validate);
+        $accessToken = $user->createToken('authToken')->accessToken;
 
         //Generating Secure Code
-
+        $name = $request->input('name');
         $code = '';
 
         for ($i=0; $i<4; $i++) {
@@ -106,12 +111,11 @@ class AuthController extends Controller
         DB::transaction(function () use ($request,$secureCode){
             if (!$secureCode->save()) {
                 throw new Exception('Не удалось сохранить код! Попробуйте заново !');
-
             }
         });
 
-        Mail::to($request->input('email'))->send(new ConfirmationMail($code));
-
+//        Mail::to($request->input('email'))->send(new ConfirmationMail($code));
+//
 
         return response([
            'Код' => 'Код подтверждения отправлен на почту !'
@@ -121,12 +125,35 @@ class AuthController extends Controller
 
     public function confirm_code(Request $request){
 
-
-
         $check = SecureCode::where('email','=', $request->input('email'))->where('value','=',$request->input('secure_code'))->first();
         if (!$check){
             throw new Exception('Неверный код !');
         }
+
+        $confirmed = DB::table('users')->where('email','=',$request->input('email'))
+            ->update(['is_confirmed' => 1]);
+
+        if (!$confirmed){
+            throw new Exception('Пользователь с данным почтовым адресом не найден !');
+        }
+
+//        //$id = User::get(['id'])->pluck
+//        $user = User::whereHas('email', function ($query) use ($term){
+//
+//        });
+//
+//        if (!$user){
+//            throw new Exception('Пользователь с данным почтовым адресом не найден !');
+//        }
+//
+//
+//        return response([
+//            'message' => 'Аккаунт подтвержден ! ',
+//            'Token' => $accessToken
+//        ]);
+
+
     }
+
 
 }

@@ -33,7 +33,7 @@ Route::group(['prefix'=>'secure-code'],function (){
 
 Route::group(['prefix'=>'auth'], function() {
     Route::post('login',[AuthController::class,'login'])->name('login');
-//    Route::post('register',[AuthController::class,'register']);
+    Route::post('register',[AuthController::class,'register']);
 });
 
 Route::group(['prefix'=>'categories'], function (){
@@ -62,7 +62,7 @@ Route::group(['prefix' => 'profile'], function () {
 });
 Route::group(['prefix' => 'remastered'], function (){
     Route::post('registration',[AuthController::class, 'registration']);
-    Route::get('test',[AuthController::class,'confirm_code']);
+    Route::post('test',[AuthController::class,'confirm_code']);
 });
 Route::post('forgot-password',[PasswordController::class,'forgot']);
 Route::post('reset-password',[PasswordController::class,'reset']);
