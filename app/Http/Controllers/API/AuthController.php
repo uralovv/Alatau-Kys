@@ -114,11 +114,11 @@ class AuthController extends Controller
             }
         });
 
-//        Mail::to($request->input('email'))->send(new ConfirmationMail($code));
+        Mail::to($request->input('email'))->send(new ConfirmationMail($code));
 //
 
         return response([
-           'Код' => 'Код подтверждения отправлен на почту !'
+           'data' => 'Код подтверждения отправлен на почту !'
         ]);
 
     }
