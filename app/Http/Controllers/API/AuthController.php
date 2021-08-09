@@ -88,13 +88,13 @@ class AuthController extends Controller
         $validate['password'] = bcrypt($request->password);
 //        $this->confirm_code($request);
 //        $this->name = $request->input('name');
-         $this->confirm_code($request);
+//         $this->confirm_code($request);
 
         $user = User::create($validate);
         $accessToken = $user->createToken('authToken')->accessToken;
 
         //Generating Secure Code
-        $name = $request->input('name');
+//        $name = $request->input('name');
         $code = '';
 
         for ($i=0; $i<4; $i++) {
