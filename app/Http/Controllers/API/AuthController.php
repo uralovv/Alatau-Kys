@@ -16,58 +16,31 @@ use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
-    private $name;
     // Register account
     /**
      * @throws Exception
      */
-    public function register(Request $request){
-        $validatedData = $request->validate([
-           'name' => 'bail|required|max:30',
-            'email' => 'bail|required|email|unique:users',
-            'password' => 'bail|required|confirmed',
-//            'code' => 'bail|required'
-        ] ,
-        [
-            'email.unique' => 'Данный почтовый ящик уже был зарегестрирован!'
-        ]);
-
-        $validatedData['password'] = bcrypt($request->password);
-
-        //Code check for mail
-
-        if (!SecureCode::check($request->input('email'), $request->input('secure_code'))) {
-            throw new Exception('Неверный код! Повторите попытку или отправьте код заново!');
-        }
-
-        $user = User::create($validatedData);
-        $accessToken = $user->createToken('authToken')->accessToken;
-        return response(['user'=>$user,'token'=>$accessToken],201);
-    }
-
-    //Login
     public function login(Request $request){
         $loginData = $request->validate([
-           'email' => 'bail|email|required',
+            'email' => 'bail|email|required',
             'password' => 'bail|required'
         ]);
+
+
+
+        $check = User::where('email','=', $request->input('email'))->where('is_confirmed','=',0)->first();
 
         if (!auth()->attempt($loginData)){
             throw new \Exception('Введен неверный email или пароль!', 422);
 //            return response(['message'=>'Введен неверный email или пароль']);
         }
+        if ($check){
+            throw new Exception('Аккаунт не подтвержден! Подтвердите вашу почту !');
+        }
+
         $accessToken = auth()->user()->createToken('authToken')->accessToken;
         return response(['user' => auth()->user(), 'accessToken' => $accessToken]);
     }
-
-    //Logout
-
-//    public function logout(){
-//        Auth::user()->token()->revoke();
-//    }
-
-
-// Remastered AuthController
 
     public function registration(Request $request){
 
@@ -86,15 +59,12 @@ class AuthController extends Controller
         ]);
 
         $validate['password'] = bcrypt($request->password);
-//        $this->confirm_code($request);
-//        $this->name = $request->input('name');
-//         $this->confirm_code($request);
+
 
         $user = User::create($validate);
         $accessToken = $user->createToken('authToken')->accessToken;
 
-        //Generating Secure Code
-//        $name = $request->input('name');
+
         $code = '';
 
         for ($i=0; $i<4; $i++) {
@@ -115,7 +85,6 @@ class AuthController extends Controller
         });
 
         Mail::to($request->input('email'))->send(new ConfirmationMail($code));
-//
 
         return response([
            'data' => 'Код подтверждения отправлен на почту !'
@@ -125,33 +94,44 @@ class AuthController extends Controller
 
     public function confirm_code(Request $request){
 
-        $check = SecureCode::where('email','=', $request->input('email'))->where('value','=',$request->input('secure_code'))->first();
+        $email = $request->input('email');
+        $code = $request->input('secure_code');
+
+        $request->validate([
+            'email' => 'bail|required|email',
+            'secure_code' => 'bail|required'
+        ]);
+
+
+
+        $check = SecureCode::where('email','=', $email)->where('value','=',$code)->first();
         if (!$check){
-            throw new Exception('Неверный код !');
+            throw new Exception('Неверный код или неверный почтовый адрес!');
         }
 
-        $confirmed = DB::table('users')->where('email','=',$request->input('email'))
+        $confirmed = DB::table('users')->where('email','=',$email)
             ->update(['is_confirmed' => 1]);
 
         if (!$confirmed){
-            throw new Exception('Пользователь с данным почтовым адресом не найден !');
+            throw new Exception('Пользователь уже был подтрвержден !');
         }
 
-//        //$id = User::get(['id'])->pluck
-//        $user = User::whereHas('email', function ($query) use ($term){
-//
-//        });
-//
-//        if (!$user){
-//            throw new Exception('Пользователь с данным почтовым адресом не найден !');
-//        }
-//
-//
-//        return response([
-//            'message' => 'Аккаунт подтвержден ! ',
-//            'Token' => $accessToken
-//        ]);
+        $user = SecureCode::where('email', $email)->where('value',$code)->first();
+        $token = $user->createToken('authToken')->accessToken;
 
+        if (!$user){
+            throw new Exception('Пользователь не найден !');
+        }
+
+        $already_confirmed = DB::table('users')->where('is_confirmed', '=' , 1);
+        if ($already_confirmed){
+            throw new Exception('Пользователь уже был подтрвержден !');
+        }
+
+        return response([
+            'data' => 'Акканут подтвержден !',
+            'Token' => $token
+        ]);
 
     }
 

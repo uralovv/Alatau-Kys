@@ -8,10 +8,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Request;
+use Laravel\Passport\HasApiTokens;
 
 class SecureCode extends Model
 {
-    use HasFactory;
+    use HasFactory, HasApiTokens;
     protected $fillable = ['email','value'];
 
     protected static int $interval = 60;

@@ -26,16 +26,20 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::group(['prefix'=>'secure-code'],function (){
-   Route::post('create',[SecureCodeController::class,'create']);
-   Route::post('register',[SecureCodeController::class,'register']);
-});
+//Route::group(['prefix'=>'secure-code'],function (){
+//   Route::post('create',[SecureCodeController::class,'create']);
+//   Route::post('register',[SecureCodeController::class,'register']);
+//});
+//Route::group(['prefix'=>'auth'], function() {
+//    Route::post('login',[AuthController::class,'login'])->name('login');
+//    Route::post('register',[AuthController::class,'register']);
+//});
 
-Route::group(['prefix'=>'auth'], function() {
+Route::group(['prefix' => 'auth'], function (){
+    Route::post('registration',[AuthController::class, 'registration']);
     Route::post('login',[AuthController::class,'login'])->name('login');
-    Route::post('register',[AuthController::class,'register']);
+    Route::post('email-confirmation',[AuthController::class,'confirm_code']);
 });
-
 Route::group(['prefix'=>'categories'], function (){
    Route::get('/',[CategoriesController::class,'index']);
    Route::get('{id}/products',[CategoriesController::class,'view']);
@@ -59,10 +63,6 @@ Route::group(['prefix' => 'wishlist'], function (){
 });
 Route::group(['prefix' => 'profile'], function () {
     Route::patch('password-change',[PasswordController::class,'update'])->middleware('auth:api');
-});
-Route::group(['prefix' => 'remastered'], function (){
-    Route::post('registration',[AuthController::class, 'registration']);
-    Route::post('test',[AuthController::class,'confirm_code']);
 });
 Route::post('forgot-password',[PasswordController::class,'forgot']);
 Route::post('reset-password',[PasswordController::class,'reset']);
