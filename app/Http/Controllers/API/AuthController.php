@@ -123,10 +123,10 @@ class AuthController extends Controller
             throw new Exception('Пользователь не найден !');
         }
 
-        $already_confirmed = DB::table('users')->where('is_confirmed', '=' , 1);
-        if ($already_confirmed){
-            throw new Exception('Пользователь уже был подтрвержден !');
-        }
+//        $already_confirmed = DB::table('users')->where('is_confirmed', '=' , 1);
+//        if ($already_confirmed){
+//            throw new Exception('Пользователь уже был подтрвержден !');
+//        }
 
         return response([
             'data' => 'Акканут подтвержден !',
