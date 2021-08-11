@@ -109,7 +109,7 @@ class WishlistController extends Controller
         }
 //            foreach ($product->products as $item)
         return response([
-            'Products' => $data
+            'data' => $data
         ]);
 
     }

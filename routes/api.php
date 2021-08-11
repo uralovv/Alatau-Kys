@@ -10,7 +10,7 @@ use App\Http\Controllers\API\ProductController;
 use App\Http\Controllers\API\CartController;
 use App\Http\Controllers\API\WishlistController;
 use App\Http\Controllers\API\PasswordController;
-
+use App\Http\Controllers\API\CartProductController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -56,6 +56,12 @@ Route::group(['prefix'=>'cart'], function (){
     Route::post('{key}',[CartController::class,'addProducts']);
     Route::delete('{key}',[CartController::class,'removeProduct']);
 });
+Route::group(['prefix'=>'remastered-cart'], function (){
+   Route::post('add',[CartProductController::class,'store']);
+   Route::delete('delete',[CartProductController::class,'delete']);
+   Route::get('view',[CartProductController::class,'view']);
+});
+
 Route::group(['prefix' => 'wishlist'], function (){
    Route::post('add',[WishlistController::class,'store'])->middleware('auth:api');
    Route::delete('delete',[WishlistController::class,'delete'])->middleware('auth:api');
