@@ -39,6 +39,8 @@ Route::group(['prefix' => 'auth'], function (){
     Route::post('registration',[AuthController::class, 'registration']);
     Route::post('login',[AuthController::class,'login'])->name('login');
     Route::post('email-confirmation',[AuthController::class,'confirm_code']);
+    Route::post('resend-code',[AuthController::class,'resend']);
+    Route::post('logout',[AuthController::class,'logout'])->middleware('auth:api');
 });
 Route::group(['prefix'=>'categories'], function (){
    Route::get('/',[CategoriesController::class,'index']);

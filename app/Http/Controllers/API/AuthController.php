@@ -26,8 +26,6 @@ class AuthController extends Controller
             'password' => 'bail|required'
         ]);
 
-
-
         $check = User::where('email','=', $request->input('email'))->where('is_confirmed','=',0)->first();
 
         if (!auth()->attempt($loginData)){
@@ -132,8 +130,55 @@ class AuthController extends Controller
             'data' => 'Акканут подтвержден !',
             'Token' => $token
         ]);
-
     }
 
+    public function logout()
+    {
+        $user = Auth::user()->token();
+        $user->revoke();
+        return response([
+            'data' => 'Вы вышли с аккаунта !'
+        ]);
+    }
 
+    public function resend(Request $request){
+        $validator = Validator::make(
+            $request->all(),
+            [
+                'email' => 'required|email'
+            ],
+            [
+                'email.required' => 'Введите почтовый адрес !',
+                'email.email' => 'Неверный формат почтового адреса !'
+            ]
+        );
+        if ($validator->fails()){
+            throw new Exception($validator->errors()->first());
+        }
+        $code = '';
+
+        for ($i=0; $i<4; $i++) {
+            $code .= mt_rand(0, 9);
+        }
+
+
+        // Creating secure code
+        $secureCode = new SecureCode([
+            'value' => $code,
+            'email' => $request->input('email')
+        ]);
+
+        DB::transaction(function () use ($request,$secureCode){
+            if (!$secureCode->save()) {
+                throw new Exception('Не удалось сохранить код! Попробуйте заново !');
+            }
+        });
+        //Mail::to($request->input('email'))->send(new ConfirmationMail($code));
+
+        return response([
+            'data' => 'Письмо отправлено !'
+        ]);
+
+
+    }
 }
