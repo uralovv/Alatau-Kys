@@ -11,6 +11,8 @@ use App\Http\Controllers\API\CartController;
 use App\Http\Controllers\API\WishlistController;
 use App\Http\Controllers\API\PasswordController;
 use App\Http\Controllers\API\CartProductController;
+use App\Http\Controllers\API\AddressController;
+use App\Http\Controllers\API\AboutController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -71,6 +73,10 @@ Route::group(['prefix' => 'wishlist'], function (){
 });
 Route::group(['prefix' => 'profile'], function () {
     Route::patch('password-change',[PasswordController::class,'update'])->middleware('auth:api');
+});
+Route::group(['prefix' => 'about-us'], function (){
+   Route::get('addresses',[AddressController::class,'index']);
+   Route::get('info',[AboutController::class,'index']);
 });
 Route::post('forgot-password',[PasswordController::class,'forgot']);
 Route::post('reset-password',[PasswordController::class,'reset']);
