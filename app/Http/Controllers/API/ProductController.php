@@ -12,11 +12,12 @@ class ProductController extends Controller
     {
         /** @var Product|null $product */
         $product = Product::select(['id', 'name', 'additional_images', 'description', 'price'])->find($id);
+        $images = Product::select(['additional_images'])->where($id)->get();
 
         if (!$product) {
             throw new \Exception('Товар не найден !');
         }
-        return response()->json(['Data' => $product], 200);
+        return response()->json(['Data' => $product,'$images'], 200);
     }
 
 
