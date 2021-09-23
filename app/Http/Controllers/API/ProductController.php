@@ -20,6 +20,7 @@ class ProductController extends Controller
         return response()->json(['Data' => $product,'$images'], 200);
     }
 
+    
 
     public function search(Request $request): \Illuminate\Http\JsonResponse
     {
