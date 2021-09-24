@@ -11,8 +11,8 @@ class ProductController extends Controller
     public function view($id)
     {
         /** @var Product|null $product */
-        $product = Product::select(['id', 'name', 'description', 'price'])->find($id);
-        $images = Product::select(['additional_images'])->where($id)->get();
+        $product = Product::select(['id', 'name', 'additional_images', 'image2', 'image3', 'image4', 'description', 'price'])->find($id);
+        // $images = Product::select(['additional_images'])->where($id)->get();
 
         if (!$product) {
             throw new \Exception('Товар не найден !');
